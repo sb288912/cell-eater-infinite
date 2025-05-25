@@ -182,7 +182,7 @@ function purchaseUpgrade(type) {
 // Helper function to generate random enemy size based on player size
 function getRandomEnemyRadius() {
     const minRadius = 15;
-    const maxRadius = (player.radius + 15) * 0.5;
+    const maxRadius = player.radius * 1.5;
     return minRadius + Math.random() * (maxRadius - minRadius);
 }
 
