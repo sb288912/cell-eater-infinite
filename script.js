@@ -72,6 +72,95 @@ const upgradeConfigs = {
 
 let gameState = "menu";
 let currentSlot = null;
+let selectedDifficulty = "medium";
+
+// Difficulty System
+const difficultyConfigs = {
+    novice: {
+        name: "Novice",
+        description: "For new players - extra food, fewer enemies, slower pace",
+        foodMultiplier: 2.0,
+        enemyMultiplier: 0.5,
+        enemySpeedMultiplier: 0.7,
+        enemyAggressionMultiplier: 0.6,
+        energyRegenMultiplier: 1.5,
+        upgradeCostMultiplier: 0.8,
+        playerStartSize: 1.2,
+        enemySizeVariation: 0.8
+    },
+    easy: {
+        name: "Easy",
+        description: "Relaxed gameplay with more resources and weaker enemies",
+        foodMultiplier: 1.5,
+        enemyMultiplier: 0.7,
+        enemySpeedMultiplier: 0.8,
+        enemyAggressionMultiplier: 0.7,
+        energyRegenMultiplier: 1.3,
+        upgradeCostMultiplier: 0.9,
+        playerStartSize: 1.1,
+        enemySizeVariation: 0.9
+    },
+    medium: {
+        name: "Medium",
+        description: "Balanced gameplay for most players",
+        foodMultiplier: 1.0,
+        enemyMultiplier: 1.0,
+        enemySpeedMultiplier: 1.0,
+        enemyAggressionMultiplier: 1.0,
+        energyRegenMultiplier: 1.0,
+        upgradeCostMultiplier: 1.0,
+        playerStartSize: 1.0,
+        enemySizeVariation: 1.0
+    },
+    hard: {
+        name: "Hard",
+        description: "Challenging gameplay with aggressive enemies and limited resources",
+        foodMultiplier: 0.8,
+        enemyMultiplier: 1.3,
+        enemySpeedMultiplier: 1.2,
+        enemyAggressionMultiplier: 1.3,
+        energyRegenMultiplier: 0.8,
+        upgradeCostMultiplier: 1.2,
+        playerStartSize: 0.9,
+        enemySizeVariation: 1.2
+    },
+    insane: {
+        name: "Insane",
+        description: "Brutal difficulty for experienced players - survive if you can",
+        foodMultiplier: 0.6,
+        enemyMultiplier: 1.6,
+        enemySpeedMultiplier: 1.4,
+        enemyAggressionMultiplier: 1.6,
+        energyRegenMultiplier: 0.6,
+        upgradeCostMultiplier: 1.5,
+        playerStartSize: 0.8,
+        enemySizeVariation: 1.4
+    },
+    extreme: {
+        name: "Extreme",
+        description: "Overwhelming odds - fast, large enemies with minimal resources",
+        foodMultiplier: 0.4,
+        enemyMultiplier: 2.0,
+        enemySpeedMultiplier: 1.6,
+        enemyAggressionMultiplier: 2.0,
+        energyRegenMultiplier: 0.4,
+        upgradeCostMultiplier: 2.0,
+        playerStartSize: 0.7,
+        enemySizeVariation: 1.6
+    },
+    impossible: {
+        name: "Impossible",
+        description: "The ultimate challenge - only for the most skilled players",
+        foodMultiplier: 0.3,
+        enemyMultiplier: 2.5,
+        enemySpeedMultiplier: 1.8,
+        enemyAggressionMultiplier: 2.5,
+        energyRegenMultiplier: 0.3,
+        upgradeCostMultiplier: 3.0,
+        playerStartSize: 0.6,
+        enemySizeVariation: 2.0
+    }
+};
 
 let player = {
     x: 0,
@@ -123,6 +212,7 @@ const sizeUnits = [
 function saveGame(slot) {
     const saveData = {
         player: player,
+        difficulty: selectedDifficulty,
         timestamp: Date.now()
     };
     localStorage.setItem(`cell_eater_save_${slot}`, JSON.stringify(saveData));
@@ -134,6 +224,10 @@ function loadGame(slot) {
     if (saveData) {
         const data = JSON.parse(saveData);
         player = data.player;
+        // Load difficulty if saved, otherwise keep current selection
+        if (data.difficulty) {
+            selectDifficulty(data.difficulty);
+        }
         currentSlot = slot;
         startGame();
     }
@@ -148,7 +242,8 @@ function updateSlotInfo() {
         if (saveData) {
             const data = JSON.parse(saveData);
             const date = new Date(data.timestamp);
-            infoDiv.textContent = `Money: $${Math.floor(data.player.money)} - ${date.toLocaleDateString()}`;
+            const difficulty = data.difficulty || 'Medium';
+            infoDiv.innerHTML = `Money: $${Math.floor(data.player.money)} - ${difficulty}<br><span style="font-size: 0.8em; color: #aaa;">${date.toLocaleDateString()}</span>`;
         } else {
             infoDiv.textContent = 'Empty';
         }
@@ -160,7 +255,9 @@ function calculateUpgradeCost(type) {
     const config = upgradeConfigs[type];
     const currentLevel = player.upgrades[type];
     if (currentLevel >= config.maxLevel) return Infinity;
-    return Math.floor(config.basePrice * Math.pow(config.priceMultiplier, currentLevel - 1));
+    const difficulty = difficultyConfigs[selectedDifficulty];
+    const baseCost = config.basePrice * Math.pow(config.priceMultiplier, currentLevel - 1);
+    return Math.floor(baseCost * difficulty.upgradeCostMultiplier);
 }
 
 function updateShopUI() {
@@ -191,8 +288,9 @@ function purchaseUpgrade(type) {
 
 // Helper function to generate random enemy size based on player size
 function getRandomEnemyRadius() {
-    const minRadius = 15;
-    const maxRadius = player.radius * 1.5;
+    const difficulty = difficultyConfigs[selectedDifficulty];
+    const minRadius = 15 * difficulty.enemySizeVariation;
+    const maxRadius = player.radius * 1.5 * difficulty.enemySizeVariation;
     return minRadius + Math.random() * (maxRadius - minRadius);
 }
 
@@ -237,9 +335,11 @@ function generateEntitiesForChunk(chunkKey) {
     const bounds = getChunkBounds(chunkKey);
     const chunkFood = food.get(chunkKey);
     const chunkEnemies = enemies.get(chunkKey);
+    const difficulty = difficultyConfigs[selectedDifficulty];
 
-    // Generate food
-    const foodToGenerate = Math.max(0, Math.floor(entityLimit.food / Math.pow((2 * renderDistance + 1), 2)) - chunkFood.length);
+    // Generate food with difficulty modifier
+    const baseFoodToGenerate = Math.floor(entityLimit.food / Math.pow((2 * renderDistance + 1), 2));
+    const foodToGenerate = Math.max(0, Math.floor(baseFoodToGenerate * difficulty.foodMultiplier) - chunkFood.length);
     for (let i = 0; i < foodToGenerate; i++) {
         chunkFood.push({
             x: bounds.minX + Math.random() * (bounds.maxX - bounds.minX),
@@ -249,16 +349,18 @@ function generateEntitiesForChunk(chunkKey) {
         });
     }
 
-    // Generate enemies
-    const enemiesToGenerate = Math.max(0, Math.ceil(entityLimit.enemies / Math.pow((2 * renderDistance + 1), 2)) - chunkEnemies.length);
+    // Generate enemies with difficulty modifier
+    const baseEnemiesToGenerate = Math.ceil(entityLimit.enemies / Math.pow((2 * renderDistance + 1), 2));
+    const enemiesToGenerate = Math.max(0, Math.floor(baseEnemiesToGenerate * difficulty.enemyMultiplier) - chunkEnemies.length);
     for (let i = 0; i < enemiesToGenerate; i++) {
         const radius = getRandomEnemyRadius();
+        const baseSpeed = 2.5 * (15 / radius) * (0.8 + Math.random() * 0.4);
         chunkEnemies.push({
             x: bounds.minX + Math.random() * (bounds.maxX - bounds.minX),
             y: bounds.minY + Math.random() * (bounds.maxY - bounds.minY),
             radius: radius,
             color: `hsl(${Math.random() * 360}, 60%, 50%)`,
-            speed: 2.5 * (15 / radius) * (0.8 + Math.random() * 0.4),
+            speed: baseSpeed * difficulty.enemySpeedMultiplier,
             targetX: bounds.minX + Math.random() * (bounds.maxX - bounds.minX),
             targetY: bounds.minY + Math.random() * (bounds.maxY - bounds.minY),
             name: "Bot",
@@ -388,6 +490,11 @@ function drawScore() {
     ctx.fillText(`Score: ${player.score}`, 15, 35);
     ctx.fillText(`Money: $${Math.floor(player.money)}`, 15, 65);
     
+    // Draw difficulty indicator
+    ctx.font = '16px Arial';
+    const difficulty = difficultyConfigs[selectedDifficulty];
+    ctx.fillText(`Difficulty: ${difficulty.name}`, 15, 120);
+    
     // Draw energy bar
     const energyBarWidth = 150;
     const energyBarHeight = 15;
@@ -466,10 +573,11 @@ function getMouseWorldCoordinates(mouseX, mouseY) {
 function updatePlayerEnergy() {
     if (!isPaused && gameState === "playing") {
         const energyRegenBonus = 1 + (player.upgrades.stamina - 1) * upgradeConfigs.stamina.effect;
+        const difficulty = difficultyConfigs[selectedDifficulty];
         if (player.boost && player.energy > 0) {
             player.energy = Math.max(0, player.energy - 1);
         } else {
-            player.energy = Math.min(player.maxEnergy, player.energy + player.energyRegen * energyRegenBonus);
+            player.energy = Math.min(player.maxEnergy, player.energy + player.energyRegen * energyRegenBonus * difficulty.energyRegenMultiplier);
         }
     }
 }
@@ -507,7 +615,8 @@ function updateEntities() {
                     
                     // Find nearby entities for smart decision making
                     const nearbyEntities = [];
-                    const detectionRange = Math.max(500, enemy.radius * 20);
+                    const difficulty = difficultyConfigs[selectedDifficulty];
+                    const detectionRange = Math.max(500, enemy.radius * 20 * difficulty.enemyAggressionMultiplier);
                     
                     // Check player
                     const distToPlayer = Math.sqrt(Math.pow(player.x - enemy.x, 2) + Math.pow(player.y - enemy.y, 2));
@@ -856,6 +965,12 @@ function startGame() {
     gameUI.classList.remove('hidden');
     shop.classList.add('hidden');
 
+    // Apply difficulty to player starting size if this is a new game
+    if (player.score === 0) {
+        const difficulty = difficultyConfigs[selectedDifficulty];
+        player.radius = initialPlayerRadiusGameUnits * difficulty.playerStartSize;
+    }
+
     food.clear();
     enemies.clear();
 
@@ -1097,8 +1212,47 @@ window.addEventListener('resize', () => {
     }
 });
 
+// Difficulty System Functions
+function updateDifficultyDescription() {
+    const descriptionDiv = document.getElementById('difficultyDescription');
+    const difficulty = difficultyConfigs[selectedDifficulty];
+    descriptionDiv.textContent = difficulty.description;
+}
+
+function selectDifficulty(difficultyLevel) {
+    selectedDifficulty = difficultyLevel;
+    
+    // Update UI
+    document.querySelectorAll('.difficulty-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-difficulty="${difficultyLevel}"]`).classList.add('active');
+    
+    updateDifficultyDescription();
+    
+    // Save to localStorage
+    localStorage.setItem('cell_eater_difficulty', difficultyLevel);
+}
+
+function loadDifficulty() {
+    const savedDifficulty = localStorage.getItem('cell_eater_difficulty');
+    if (savedDifficulty && difficultyConfigs[savedDifficulty]) {
+        selectDifficulty(savedDifficulty);
+    } else {
+        selectDifficulty('medium'); // Default
+    }
+}
+
 // Initialize
 updateSlotInfo();
+loadDifficulty();
+
+// Setup difficulty buttons
+document.querySelectorAll('.difficulty-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        selectDifficulty(btn.dataset.difficulty);
+    });
+});
 
 // Setup slot management
 document.getElementById('addSlot').addEventListener('click', addSlot);
