@@ -179,6 +179,13 @@ function purchaseUpgrade(type) {
     }
 }
 
+// Helper function to generate random enemy size based on player size
+function getRandomEnemyRadius() {
+    const minRadius = 15;
+    const maxRadius = (player.radius + 15) * 0.5;
+    return minRadius + Math.random() * (maxRadius - minRadius);
+}
+
 // Chunk Management
 function getChunkKey(x, y) {
     const chunkX = Math.floor(x / chunkSize);
@@ -235,7 +242,7 @@ function generateEntitiesForChunk(chunkKey) {
     // Generate enemies
     const enemiesToGenerate = Math.max(0, Math.ceil(entityLimit.enemies / Math.pow((2 * renderDistance + 1), 2)) - chunkEnemies.length);
     for (let i = 0; i < enemiesToGenerate; i++) {
-        const radius = 18;
+        const radius = getRandomEnemyRadius();
         chunkEnemies.push({
             x: bounds.minX + Math.random() * (bounds.maxX - bounds.minX),
             y: bounds.minY + Math.random() * (bounds.maxY - bounds.minY),
@@ -587,7 +594,7 @@ function checkCollisions() {
                         const randomChunk = Array.from(visibleChunks)[Math.floor(Math.random() * visibleChunks.size)];
                         const bounds = getChunkBounds(randomChunk);
                         if (enemies.has(randomChunk)) {
-                            const radius = 18;
+                            const radius = getRandomEnemyRadius();
                             enemies.get(randomChunk).push({
                                 x: bounds.minX + Math.random() * (bounds.maxX - bounds.minX),
                                 y: bounds.minY + Math.random() * (bounds.maxY - bounds.minY),
