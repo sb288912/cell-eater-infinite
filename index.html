@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Endless Agar.io Clone</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="mainMenu" class="menu">
+        <h1>Agar Clone</h1>
+        <div class="save-slots">
+            <h2>Save Slots</h2>
+            <div class="slot" data-slot="1">
+                <span class="slot-name">Slot 1</span>
+                <div class="slot-info">Empty</div>
+            </div>
+            <div class="slot" data-slot="2">
+                <span class="slot-name">Slot 2</span>
+                <div class="slot-info">Empty</div>
+            </div>
+            <div class="slot" data-slot="3">
+                <span class="slot-name">Slot 3</span>
+                <div class="slot-info">Empty</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="shop" class="hidden">
+        <div class="shop-header">
+            <h2>Shop</h2>
+            <span id="moneyDisplay">Money: $0</span>
+            <button id="closeShop">Close</button>
+        </div>
+        <div class="upgrades">
+            <div class="upgrade" data-upgrade="speed">
+                <span class="upgrade-name">Speed Boost</span>
+                <span class="upgrade-desc">Increase movement speed</span>
+                <span class="upgrade-level">Level: 1</span>
+                <span class="upgrade-cost">Cost: $100</span>
+                <button class="buy-btn">Buy</button>
+            </div>
+            <div class="upgrade" data-upgrade="moneyBonus">
+                <span class="upgrade-name">Money Bonus</span>
+                <span class="upgrade-desc">Increase money from enemies</span>
+                <span class="upgrade-level">Level: 1</span>
+                <span class="upgrade-cost">Cost: $150</span>
+                <button class="buy-btn">Buy</button>
+            </div>
+            <div class="upgrade" data-upgrade="absorption">
+                <span class="upgrade-name">Absorption</span>
+                <span class="upgrade-desc">Grow faster from food</span>
+                <span class="upgrade-level">Level: 1</span>
+                <span class="upgrade-cost">Cost: $200</span>
+                <button class="buy-btn">Buy</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="gameUI" class="hidden">
+        <button id="openShop">Shop</button>
+        <button id="saveGame">Save Game</button>
+    </div>
+
+    <div id="pauseMenu" class="hidden">
+        <h2>Game Paused</h2>
+        <div class="button-container">
+            <button id="continueGame">Continue Playing</button>
+            <button id="saveGamePaused">Save Game</button>
+            <button id="returnToMenu">Return to Menu</button>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+    <script src="script.js"></script>
+</body>
+</html>

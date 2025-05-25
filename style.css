@@ -1,0 +1,232 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+}
+
+canvas {
+    border: 1px solid #000;
+    position: absolute;
+    z-index: 1;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.menu {
+    position: absolute;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.menu h1 {
+    font-size: 48px;
+    margin-bottom: 40px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.save-slots {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 10px;
+    width: 300px;
+}
+
+.save-slots h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.slot {
+    background: rgba(255, 255, 255, 0.2);
+    margin: 10px 0;
+    padding: 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.slot:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.slot-name {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.slot-info {
+    font-size: 0.9em;
+    color: #ccc;
+}
+
+#shop, #pauseMenu {
+    position: absolute;
+    z-index: 5;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 20px;
+    border-radius: 10px;
+    min-width: 400px;
+}
+
+#pauseMenu {
+    text-align: center;
+}
+
+#pauseMenu h2 {
+    margin-bottom: 30px;
+}
+
+#pauseMenu .button-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#pauseMenu button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+}
+
+.shop-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.shop-header h2 {
+    margin: 0;
+}
+
+#moneyDisplay {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.upgrades {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.upgrade {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 5px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 5px;
+    align-items: center;
+}
+
+.upgrade-name {
+    font-weight: bold;
+    color: #4CAF50;
+    grid-column: 1;
+}
+
+.upgrade-desc {
+    color: #ccc;
+    font-size: 0.9em;
+    grid-column: 1;
+}
+
+.upgrade-level {
+    color: #fff;
+    grid-column: 1;
+}
+
+.upgrade-cost {
+    color: #FFD700;
+    grid-column: 1;
+}
+
+.buy-btn {
+    grid-column: 2;
+    grid-row: 1 / span 4;
+    align-self: center;
+}
+
+button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #45a049;
+}
+
+button:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+}
+
+#closeShop {
+    background: #f44336;
+}
+
+#closeShop:hover {
+    background: #da190b;
+}
+
+#gameUI {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+    display: flex;
+    gap: 10px;
+}
+
+#saveGame {
+    background: #2196F3;
+}
+
+#saveGame:hover {
+    background: #1976D2;
+}
+
+#returnToMenu {
+    background: #f44336;
+}
+
+#returnToMenu:hover {
+    background: #da190b;
+}
+
+#continueGame {
+    background: #4CAF50;
+}
+
+#continueGame:hover {
+    background: #45a049;
+}
