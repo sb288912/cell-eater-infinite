@@ -17,8 +17,24 @@ const returnToMenuBtn = document.getElementById('returnToMenu');
 // Pause state
 let isPaused = false;
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+// Set initial canvas size
+function resizeCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    
+    ctx.scale(dpr, dpr);
+    
+    // Update camera if game is running
+    if (gameState === "playing") {
+        updateCamera();
+    }
+}
+
+// Initial canvas setup
+resizeCanvas();
 
 const initialPlayerRadiusGameUnits = 20;
 const initialPlayerSizeNm = 100;
@@ -484,34 +500,50 @@ function drawEntities() {
 function drawScore() {
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
+    
+    // Responsive scaling for UI elements
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const scale = Math.min(rect.width / 1920, rect.height / 1080);
+    const fontSize = Math.max(16, 24 * scale);
+    const smallFontSize = Math.max(12, 16 * scale);
+    const padding = Math.max(10, 15 * scale);
+    
     ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-    ctx.font = '24px Arial Black';
+    ctx.font = `${fontSize}px Arial Black`;
     ctx.textAlign = 'left';
-    ctx.fillText(`Score: ${player.score}`, 15, 35);
-    ctx.fillText(`Money: $${Math.floor(player.money)}`, 15, 65);
+    ctx.fillText(`Score: ${player.score}`, padding, padding + fontSize);
+    ctx.fillText(`Money: $${Math.floor(player.money)}`, padding, padding + fontSize * 2.5);
     
     // Draw difficulty indicator
-    ctx.font = '16px Arial';
+    ctx.font = `${smallFontSize}px Arial`;
     const difficulty = difficultyConfigs[selectedDifficulty];
-    ctx.fillText(`Difficulty: ${difficulty.name}`, 15, 120);
+    ctx.fillText(`Difficulty: ${difficulty.name}`, padding, padding + fontSize * 6);
     
     // Draw energy bar
-    const energyBarWidth = 150;
-    const energyBarHeight = 15;
+    const energyBarWidth = Math.max(100, 150 * scale);
+    const energyBarHeight = Math.max(10, 15 * scale);
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-    ctx.fillRect(15, 75, energyBarWidth, energyBarHeight);
+    ctx.fillRect(padding, padding + fontSize * 3.5, energyBarWidth, energyBarHeight);
     ctx.fillStyle = player.energy > 30 ? 'rgba(0, 255, 0, 0.7)' : 'rgba(255, 0, 0, 0.7)';
-    ctx.fillRect(15, 75, (player.energy / player.maxEnergy) * energyBarWidth, energyBarHeight);
+    ctx.fillRect(padding, padding + fontSize * 3.5, (player.energy / player.maxEnergy) * energyBarWidth, energyBarHeight);
     ctx.restore();
 }
 
 function drawPlayerSizeInfo() {
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
+    
+    // Responsive scaling for UI elements
+    const rect = canvas.getBoundingClientRect();
+    const scale = Math.min(rect.width / 1920, rect.height / 1080);
+    const fontSize = Math.max(14, 18 * scale);
+    const padding = Math.max(10, 15 * scale);
+    
     ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-    ctx.font = '18px Arial';
+    ctx.font = `${fontSize}px Arial`;
     ctx.textAlign = 'left';
-    ctx.fillText(`Size: ${formatPlayerSize()}`, 15, 95);
+    ctx.fillText(`Size: ${formatPlayerSize()}`, padding, padding + fontSize * 4.5);
     ctx.restore();
 }
 
@@ -560,13 +592,23 @@ function updateCamera() {
     camera.y += (player.y - camera.y) * 0.05;
     const targetViewableRadii = 15;
     const desiredViewableWorldUnits = player.radius * targetViewableRadii;
-    camera.zoom = Math.min(canvas.width, canvas.height) / Math.max(desiredViewableWorldUnits, 200);
+    
+    // Get canvas display size for proper zoom calculation
+    const rect = canvas.getBoundingClientRect();
+    const displayWidth = rect.width;
+    const displayHeight = rect.height;
+    
+    camera.zoom = Math.min(displayWidth, displayHeight) / Math.max(desiredViewableWorldUnits, 200);
     camera.zoom = Math.max(0.05, Math.min(camera.zoom, 1.5));
 }
 
 function getMouseWorldCoordinates(mouseX, mouseY) {
-    const worldX = (mouseX - canvas.width / 2) / camera.zoom + camera.x;
-    const worldY = (mouseY - canvas.height / 2) / camera.zoom + camera.y;
+    const rect = canvas.getBoundingClientRect();
+    const displayWidth = rect.width;
+    const displayHeight = rect.height;
+    
+    const worldX = (mouseX - displayWidth / 2) / camera.zoom + camera.x;
+    const worldY = (mouseY - displayHeight / 2) / camera.zoom + camera.y;
     return { x: worldX, y: worldY };
 }
 
@@ -1183,7 +1225,8 @@ function gameLoop() {
         cleanupChunks();
 
         ctx.save();
-        ctx.translate(canvas.width / 2, canvas.height / 2);
+        const rect = canvas.getBoundingClientRect();
+        ctx.translate(rect.width / 2, rect.height / 2);
         ctx.scale(camera.zoom, camera.zoom);
         ctx.translate(-camera.x, -camera.y);
 
@@ -1204,12 +1247,20 @@ function gameLoop() {
     }
 }
 
+// Handle window resize with debouncing
+let resizeTimeout;
 window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    if (gameState === "playing") {
-        updateCamera();
-    }
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        resizeCanvas();
+    }, 100);
+});
+
+// Handle orientation change on mobile devices
+window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+        resizeCanvas();
+    }, 300);
 });
 
 // Difficulty System Functions
