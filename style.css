@@ -36,8 +36,87 @@ canvas {
 
 .menu h1 {
     font-size: 48px;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.difficulty-selection {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 10px;
+    width: 500px;
+    margin-bottom: 20px;
+}
+
+.difficulty-selection h2 {
+    margin: 0 0 15px 0;
+    text-align: center;
+}
+
+.difficulty-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.difficulty-btn {
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: capitalize;
+}
+
+.difficulty-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.difficulty-btn.active {
+    background: #4CAF50;
+    border-color: #4CAF50;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+}
+
+.difficulty-btn[data-difficulty="novice"] {
+    color: #90EE90;
+}
+
+.difficulty-btn[data-difficulty="easy"] {
+    color: #98FB98;
+}
+
+.difficulty-btn[data-difficulty="medium"] {
+    color: #FFD700;
+}
+
+.difficulty-btn[data-difficulty="hard"] {
+    color: #FFA500;
+}
+
+.difficulty-btn[data-difficulty="insane"] {
+    color: #FF6347;
+}
+
+.difficulty-btn[data-difficulty="extreme"] {
+    color: #FF4500;
+}
+
+.difficulty-btn[data-difficulty="impossible"] {
+    color: #DC143C;
+}
+
+.difficulty-description {
+    text-align: center;
+    color: #ccc;
+    font-size: 14px;
+    font-style: italic;
+    min-height: 20px;
 }
 
 .save-slots {
