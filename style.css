@@ -1,13 +1,20 @@
+* {
+    box-sizing: border-box;
+}
+
 body {
     margin: 0;
+    padding: 0;
     overflow: hidden;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
+    width: 100vw;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: #ffffff;
+    position: relative;
 }
 
 canvas {
@@ -15,7 +22,13 @@ canvas {
     border-radius: 12px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
     position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     z-index: 1;
+    object-fit: cover;
+    display: block;
 }
 
 .hidden {
@@ -36,6 +49,7 @@ canvas {
     justify-content: center;
     padding: 20px;
     box-sizing: border-box;
+    overflow-y: auto;
 }
 
 .menu h1 {
@@ -55,7 +69,7 @@ canvas {
     backdrop-filter: blur(20px);
     padding: 32px;
     border-radius: 20px;
-    width: 600px;
+    width: min(600px, 90vw);
     margin-bottom: 32px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
@@ -148,7 +162,7 @@ canvas {
     backdrop-filter: blur(20px);
     padding: 32px;
     border-radius: 20px;
-    width: 400px;
+    width: min(400px, 90vw);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
@@ -250,7 +264,9 @@ canvas {
     transform: translate(-50%, -50%);
     padding: 32px;
     border-radius: 20px;
-    min-width: 480px;
+    width: min(480px, 90vw);
+    max-height: 90vh;
+    overflow-y: auto;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
@@ -441,4 +457,125 @@ button:disabled {
     background: linear-gradient(135deg, #57d3cd 0%, #4da594 100%);
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(78, 205, 196, 0.4);
+}
+
+/* Mobile and responsive design improvements */
+@media (max-width: 768px) {
+    .menu h1 {
+        font-size: 48px;
+        margin-bottom: 24px;
+    }
+    
+    .difficulty-selection, .save-slots {
+        padding: 24px;
+        width: min(95vw, 400px);
+        margin-bottom: 20px;
+    }
+    
+    .difficulty-buttons {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .difficulty-btn {
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+    
+    #shop, #pauseMenu {
+        width: min(95vw, 400px);
+        padding: 24px;
+        max-height: 85vh;
+    }
+    
+    #gameUI {
+        top: 10px;
+        right: 10px;
+        gap: 8px;
+    }
+    
+    #gameUI button {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .menu h1 {
+        font-size: 36px;
+        margin-bottom: 20px;
+    }
+    
+    .difficulty-selection, .save-slots {
+        padding: 20px;
+        width: 95vw;
+    }
+    
+    .difficulty-selection h2, .slots-header h2 {
+        font-size: 20px;
+    }
+    
+    .difficulty-buttons {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    #shop, #pauseMenu {
+        width: 95vw;
+        padding: 20px;
+        max-height: 80vh;
+    }
+    
+    .shop-header h2, #pauseMenu h2 {
+        font-size: 24px;
+    }
+    
+    #moneyDisplay {
+        font-size: 16px;
+        padding: 6px 12px;
+    }
+}
+
+@media (max-height: 600px) {
+    .menu {
+        justify-content: flex-start;
+        padding-top: 20px;
+    }
+    
+    .menu h1 {
+        font-size: 32px;
+        margin-bottom: 16px;
+    }
+    
+    .difficulty-selection, .save-slots {
+        margin-bottom: 16px;
+        padding: 20px;
+    }
+}
+
+/* Landscape mobile orientation */
+@media (max-height: 500px) and (orientation: landscape) {
+    .menu {
+        flex-direction: row;
+        align-items: stretch;
+        justify-content: center;
+        gap: 20px;
+        padding: 10px;
+    }
+    
+    .menu h1 {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 24px;
+        margin: 0;
+    }
+    
+    .difficulty-selection, .save-slots {
+        flex: 1;
+        max-width: 300px;
+        margin: 40px 10px 0;
+        padding: 16px;
+    }
 }
