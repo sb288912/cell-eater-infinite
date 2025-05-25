@@ -115,12 +115,12 @@ function saveGame(slot) {
         player: player,
         timestamp: Date.now()
     };
-    localStorage.setItem(`agario_save_${slot}`, JSON.stringify(saveData));
+    localStorage.setItem(`cell_eater_save_${slot}`, JSON.stringify(saveData));
     updateSlotInfo();
 }
 
 function loadGame(slot) {
-    const saveData = localStorage.getItem(`agario_save_${slot}`);
+    const saveData = localStorage.getItem(`cell_eater_save_${slot}`);
     if (saveData) {
         const data = JSON.parse(saveData);
         player = data.player;
@@ -132,7 +132,7 @@ function loadGame(slot) {
 function updateSlotInfo() {
     document.querySelectorAll('.slot').forEach(slot => {
         const slotNum = slot.dataset.slot;
-        const saveData = localStorage.getItem(`agario_save_${slotNum}`);
+        const saveData = localStorage.getItem(`cell_eater_save_${slotNum}`);
         const infoDiv = slot.querySelector('.slot-info');
         
         if (saveData) {
@@ -750,7 +750,7 @@ function addSlot() {
 function removeSlot(slot) {
     if (document.querySelectorAll('.slot').length > 1) {
         const slotNum = slot.dataset.slot;
-        localStorage.removeItem(`agario_save_${slotNum}`);
+        localStorage.removeItem(`cell_eater_save_${slotNum}`);
         slot.remove();
         document.getElementById('addSlot').disabled = false;
         renumberSlots();
@@ -764,11 +764,11 @@ function renumberSlots() {
         slot.querySelector('.slot-name').textContent = `Slot ${newSlotNum}`;
         
         // Transfer save data if exists
-        const oldSaveData = localStorage.getItem(`agario_save_${slot.dataset.slot}`);
+        const oldSaveData = localStorage.getItem(`cell_eater_save_${slot.dataset.slot}`);
         if (oldSaveData) {
-            localStorage.setItem(`agario_save_${newSlotNum}`, oldSaveData);
+            localStorage.setItem(`cell_eater_save_${newSlotNum}`, oldSaveData);
             if (newSlotNum !== parseInt(slot.dataset.slot)) {
-                localStorage.removeItem(`agario_save_${slot.dataset.slot}`);
+                localStorage.removeItem(`cell_eater_save_${slot.dataset.slot}`);
             }
         }
     });
@@ -780,7 +780,7 @@ function setupSlotListeners(slot) {
 
     slotContent.addEventListener('click', () => {
         const slotNum = slot.dataset.slot;
-        const saveData = localStorage.getItem(`agario_save_${slotNum}`);
+        const saveData = localStorage.getItem(`cell_eater_save_${slotNum}`);
         if (saveData) {
             loadGame(slotNum);
         } else {
