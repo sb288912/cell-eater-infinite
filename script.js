@@ -51,6 +51,12 @@ const upgradeConfigs = {
         priceMultiplier: 2,
         effect: 0.15,
         maxLevel: 10
+    },
+    stamina: {
+        basePrice: 175,
+        priceMultiplier: 1.7,
+        effect: 0.2,
+        maxLevel: 10
     }
 };
 
@@ -66,10 +72,15 @@ let player = {
     name: "Player",
     score: 0,
     money: 0,
+    energy: 100,
+    maxEnergy: 100,
+    energyRegen: 0.5,
+    boost: false,
     upgrades: {
         speed: 1,
         moneyBonus: 1,
-        absorption: 1
+        absorption: 1,
+        stamina: 1
     }
 };
 
@@ -319,6 +330,14 @@ function drawScore() {
     ctx.textAlign = 'left';
     ctx.fillText(`Score: ${player.score}`, 15, 35);
     ctx.fillText(`Money: $${Math.floor(player.money)}`, 15, 65);
+    
+    // Draw energy bar
+    const energyBarWidth = 150;
+    const energyBarHeight = 15;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.fillRect(15, 75, energyBarWidth, energyBarHeight);
+    ctx.fillStyle = player.energy > 30 ? 'rgba(0, 255, 0, 0.7)' : 'rgba(255, 0, 0, 0.7)';
+    ctx.fillRect(15, 75, (player.energy / player.maxEnergy) * energyBarWidth, energyBarHeight);
     ctx.restore();
 }
 
@@ -387,6 +406,17 @@ function getMouseWorldCoordinates(mouseX, mouseY) {
     return { x: worldX, y: worldY };
 }
 
+function updatePlayerEnergy() {
+    if (!isPaused && gameState === "playing") {
+        const energyRegenBonus = 1 + (player.upgrades.stamina - 1) * upgradeConfigs.stamina.effect;
+        if (player.boost && player.energy > 0) {
+            player.energy = Math.max(0, player.energy - 1);
+        } else {
+            player.energy = Math.min(player.maxEnergy, player.energy + player.energyRegen * energyRegenBonus);
+        }
+    }
+}
+
 function updatePlayerPosition(mouseX, mouseY) {
     if (isPaused) return;
     
@@ -397,7 +427,8 @@ function updatePlayerPosition(mouseX, mouseY) {
     
     const baseSpeed = player.speed * (1 + (player.upgrades.speed - 1) * upgradeConfigs.speed.effect);
     const speedReductionFactor = 0.015;
-    const currentSpeed = baseSpeed / (1 + speedReductionFactor * player.radius);
+    const boostMultiplier = (player.boost && player.energy > 0) ? 1.5 : 1;
+    const currentSpeed = (baseSpeed / (1 + speedReductionFactor * player.radius)) * boostMultiplier;
 
     if (distance > player.radius / 4) {
         player.x += (dx / distance) * currentSpeed;
@@ -622,6 +653,14 @@ window.addEventListener('keydown', (event) => {
             isPaused = false;
             pauseMenu.classList.add('hidden');
         }
+    } else if (event.key.toLowerCase() === 'b') {
+        player.boost = true;
+    }
+});
+
+window.addEventListener('keyup', (event) => {
+    if (event.key.toLowerCase() === 'b') {
+        player.boost = false;
     }
 });
 
@@ -701,10 +740,15 @@ document.querySelectorAll('.slot').forEach(slot => {
                 name: "Player",
                 score: 0,
                 money: 0,
+                energy: 100,
+                maxEnergy: 100,
+                energyRegen: 0.5,
+                boost: false,
                 upgrades: {
                     speed: 1,
                     moneyBonus: 1,
-                    absorption: 1
+                    absorption: 1,
+                    stamina: 1
                 }
             };
             startGame();
@@ -719,6 +763,7 @@ function gameLoop() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         if (gameState === "playing") {
+            updatePlayerEnergy();
             updatePlayerPosition(mouseScreenX, mouseScreenY);
         }
         
