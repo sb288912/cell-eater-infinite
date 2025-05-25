@@ -15,6 +15,10 @@ const saveGamePausedBtn = document.getElementById('saveGamePaused');
 const returnToMenuBtn = document.getElementById('returnToMenu');
 
 // Pause state
+let gameState = "menu";
+let currentSlot = null;
+let selectedDifficulty = "medium";
+
 let isPaused = false;
 
 // Set initial canvas size
@@ -85,10 +89,6 @@ const upgradeConfigs = {
         maxLevel: baseMaxLevel
     }
 };
-
-let gameState = "menu";
-let currentSlot = null;
-let selectedDifficulty = "medium";
 
 // Difficulty System
 const difficultyConfigs = {
