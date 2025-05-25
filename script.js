@@ -723,8 +723,62 @@ document.querySelectorAll('.upgrade .buy-btn').forEach(button => {
     });
 });
 
-document.querySelectorAll('.slot').forEach(slot => {
-    slot.addEventListener('click', () => {
+// Slot Management
+function addSlot() {
+    const slotsList = document.getElementById('slotsList');
+    const currentSlots = slotsList.querySelectorAll('.slot').length;
+    
+    if (currentSlots < 5) {
+        const newSlotNum = currentSlots + 1;
+        const newSlot = document.createElement('div');
+        newSlot.className = 'slot';
+        newSlot.dataset.slot = newSlotNum;
+        newSlot.innerHTML = `
+            <div class="slot-content">
+                <span class="slot-name">Slot ${newSlotNum}</span>
+                <div class="slot-info">Empty</div>
+            </div>
+            <button class="remove-slot-btn">×</button>
+        `;
+        slotsList.appendChild(newSlot);
+        setupSlotListeners(newSlot);
+    }
+
+    document.getElementById('addSlot').disabled = currentSlots >= 4;
+}
+
+function removeSlot(slot) {
+    if (document.querySelectorAll('.slot').length > 1) {
+        const slotNum = slot.dataset.slot;
+        localStorage.removeItem(`agario_save_${slotNum}`);
+        slot.remove();
+        document.getElementById('addSlot').disabled = false;
+        renumberSlots();
+    }
+}
+
+function renumberSlots() {
+    document.querySelectorAll('.slot').forEach((slot, index) => {
+        const newSlotNum = index + 1;
+        slot.dataset.slot = newSlotNum;
+        slot.querySelector('.slot-name').textContent = `Slot ${newSlotNum}`;
+        
+        // Transfer save data if exists
+        const oldSaveData = localStorage.getItem(`agario_save_${slot.dataset.slot}`);
+        if (oldSaveData) {
+            localStorage.setItem(`agario_save_${newSlotNum}`, oldSaveData);
+            if (newSlotNum !== parseInt(slot.dataset.slot)) {
+                localStorage.removeItem(`agario_save_${slot.dataset.slot}`);
+            }
+        }
+    });
+}
+
+function setupSlotListeners(slot) {
+    const slotContent = slot.querySelector('.slot-content');
+    const removeBtn = slot.querySelector('.remove-slot-btn');
+
+    slotContent.addEventListener('click', () => {
         const slotNum = slot.dataset.slot;
         const saveData = localStorage.getItem(`agario_save_${slotNum}`);
         if (saveData) {
@@ -754,7 +808,11 @@ document.querySelectorAll('.slot').forEach(slot => {
             startGame();
         }
     });
-});
+
+    removeBtn.addEventListener('click', () => {
+        removeSlot(slot);
+    });
+}
 
 function gameLoop() {
     animationFrameId = requestAnimationFrame(gameLoop);
@@ -803,3 +861,7 @@ window.addEventListener('resize', () => {
 
 // Initialize
 updateSlotInfo();
+
+// Setup slot management
+document.getElementById('addSlot').addEventListener('click', addSlot);
+document.querySelectorAll('.slot').forEach(setupSlotListeners);

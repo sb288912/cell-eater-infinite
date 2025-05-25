@@ -47,18 +47,52 @@ canvas {
     width: 300px;
 }
 
-.save-slots h2 {
-    text-align: center;
+.slots-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 20px;
+}
+
+.slots-header h2 {
+    margin: 0;
+}
+
+.slot-manage-btn {
+    font-size: 14px;
+    padding: 6px 12px;
 }
 
 .slot {
     background: rgba(255, 255, 255, 0.2);
     margin: 10px 0;
-    padding: 15px;
+    padding: 10px 15px;
     border-radius: 5px;
-    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     transition: background 0.3s;
+}
+
+.slot-content {
+    flex-grow: 1;
+    cursor: pointer;
+    padding: 5px 0;
+}
+
+.remove-slot-btn {
+    background: transparent;
+    color: #ff4444;
+    border: none;
+    font-size: 20px;
+    padding: 0 8px;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.remove-slot-btn:hover {
+    color: #ff0000;
+    background: transparent;
 }
 
 .slot:hover {
