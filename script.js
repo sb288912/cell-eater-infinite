@@ -262,7 +262,8 @@ function generateEntitiesForChunk(chunkKey) {
             targetX: bounds.minX + Math.random() * (bounds.maxX - bounds.minX),
             targetY: bounds.minY + Math.random() * (bounds.maxY - bounds.minY),
             name: "Bot",
-            id: Math.random().toString(36).substr(2, 9)
+            id: Math.random().toString(36).substr(2, 9),
+            behavior: 'wandering'
         });
     }
 }
@@ -322,17 +323,56 @@ function drawEntities() {
             const screenY = (enemy.y - camera.y) * camera.zoom + canvas.height / 2;
             if (screenX > -100 && screenX < canvas.width + 100 &&
                 screenY > -100 && screenY < canvas.height + 100) {
-                ctx.fillStyle = 'darkred';
+                
+                // Draw behavior indicator text
                 const fontSize = Math.max(8 / camera.zoom, enemy.radius / (2.5 * camera.zoom));
                 ctx.font = `${fontSize}px Arial`;
                 ctx.textAlign = 'center';
-                ctx.fillText(enemy.name, enemy.x, enemy.y - enemy.radius - (4 / camera.zoom));
+                
+                // Color-code behavior text
+                let behaviorColor = 'darkred';
+                let behaviorText = enemy.name;
+                if (enemy.behavior) {
+                    switch (enemy.behavior) {
+                        case 'fleeing':
+                            behaviorColor = '#ffaa00'; // Orange for fleeing
+                            behaviorText = '⚠️ ' + enemy.name;
+                            break;
+                        case 'hunting':
+                            behaviorColor = '#ff4444'; // Red for hunting
+                            behaviorText = '🎯 ' + enemy.name;
+                            break;
+                        case 'foraging':
+                            behaviorColor = '#44ff44'; // Green for foraging
+                            behaviorText = '🍃 ' + enemy.name;
+                            break;
+                        case 'patrolling':
+                            behaviorColor = '#4444ff'; // Blue for patrolling
+                            behaviorText = '👁️ ' + enemy.name;
+                            break;
+                        default:
+                            behaviorColor = 'darkred';
+                            behaviorText = enemy.name;
+                    }
+                }
+                
+                ctx.fillStyle = behaviorColor;
+                ctx.fillText(behaviorText, enemy.x, enemy.y - enemy.radius - (4 / camera.zoom));
                 ctx.fillText(Math.round(enemy.radius), enemy.x, enemy.y + fontSize / 3);
 
+                // Draw main enemy body
                 ctx.beginPath();
                 ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
                 ctx.fillStyle = enemy.color;
                 ctx.fill();
+                
+                // Add behavior-based border
+                if (enemy.behavior && enemy.behavior !== 'wandering') {
+                    ctx.strokeStyle = behaviorColor;
+                    ctx.lineWidth = Math.max(1, enemy.radius / 10);
+                    ctx.stroke();
+                }
+                
                 ctx.closePath();
             }
         });
@@ -461,27 +501,202 @@ function updateEntities() {
         if (enemies.has(chunkKey)) {
             const chunkEnemies = enemies.get(chunkKey);
             chunkEnemies.forEach(enemy => {
-                if (Math.random() < 0.005 || Math.sqrt(Math.pow(enemy.targetX - enemy.x, 2) + Math.pow(enemy.targetY - enemy.y, 2)) < enemy.radius) {
+                // Smart AI decision making - retarget occasionally or when reached destination
+                if (Math.random() < 0.02 || Math.sqrt(Math.pow(enemy.targetX - enemy.x, 2) + Math.pow(enemy.targetY - enemy.y, 2)) < enemy.radius * 2) {
                     const bounds = getChunkBounds(chunkKey);
-                    const distToPlayer = Math.sqrt(Math.pow(player.x - enemy.x, 2) + Math.pow(player.y - enemy.y, 2));
                     
-                    if (distToPlayer < 1000) {
-                        enemy.targetX = player.x;
-                        enemy.targetY = player.y;
-                    } else {
-                        enemy.targetX = bounds.minX + Math.random() * (bounds.maxX - bounds.minX);
-                        enemy.targetY = bounds.minY + Math.random() * (bounds.maxY - bounds.minY);
+                    // Find nearby entities for smart decision making
+                    const nearbyEntities = [];
+                    const detectionRange = Math.max(500, enemy.radius * 20);
+                    
+                    // Check player
+                    const distToPlayer = Math.sqrt(Math.pow(player.x - enemy.x, 2) + Math.pow(player.y - enemy.y, 2));
+                    if (distToPlayer < detectionRange) {
+                        nearbyEntities.push({
+                            type: 'player',
+                            x: player.x,
+                            y: player.y,
+                            radius: player.radius,
+                            distance: distToPlayer,
+                            threat: player.radius > enemy.radius * 1.1,
+                            prey: enemy.radius > player.radius * 1.1
+                        });
+                    }
+                    
+                    // Check other enemies in visible chunks
+                    for (const otherChunkKey of visibleChunks) {
+                        if (enemies.has(otherChunkKey)) {
+                            const otherEnemies = enemies.get(otherChunkKey);
+                            otherEnemies.forEach(otherEnemy => {
+                                if (otherEnemy.id !== enemy.id) {
+                                    const distToOther = Math.sqrt(Math.pow(otherEnemy.x - enemy.x, 2) + Math.pow(otherEnemy.y - enemy.y, 2));
+                                    if (distToOther < detectionRange) {
+                                        nearbyEntities.push({
+                                            type: 'enemy',
+                                            x: otherEnemy.x,
+                                            y: otherEnemy.y,
+                                            radius: otherEnemy.radius,
+                                            distance: distToOther,
+                                            threat: otherEnemy.radius > enemy.radius * 1.1,
+                                            prey: enemy.radius > otherEnemy.radius * 1.1
+                                        });
+                                    }
+                                }
+                            });
+                        }
+                    }
+                    
+                    // Check food
+                    const nearbyFood = [];
+                    if (food.has(chunkKey)) {
+                        const chunkFood = food.get(chunkKey);
+                        chunkFood.forEach(f => {
+                            const distToFood = Math.sqrt(Math.pow(f.x - enemy.x, 2) + Math.pow(f.y - enemy.y, 2));
+                            if (distToFood < detectionRange) {
+                                nearbyFood.push({
+                                    x: f.x,
+                                    y: f.y,
+                                    distance: distToFood
+                                });
+                            }
+                        });
+                    }
+                    
+                    // Smart target selection
+                    let targetSelected = false;
+                    
+                    // Priority 1: Flee from immediate threats
+                    const immediateThreats = nearbyEntities.filter(e => e.threat && e.distance < enemy.radius * 8);
+                    if (immediateThreats.length > 0) {
+                        // Flee from the closest threat
+                        const closestThreat = immediateThreats.reduce((closest, current) => 
+                            current.distance < closest.distance ? current : closest
+                        );
+                        
+                        // Calculate flee direction (opposite to threat)
+                        const fleeAngle = Math.atan2(enemy.y - closestThreat.y, enemy.x - closestThreat.x);
+                        const fleeDistance = enemy.radius * 15;
+                        enemy.targetX = enemy.x + Math.cos(fleeAngle) * fleeDistance;
+                        enemy.targetY = enemy.y + Math.sin(fleeAngle) * fleeDistance;
+                        
+                        // Keep within chunk bounds
+                        enemy.targetX = Math.max(bounds.minX + 100, Math.min(bounds.maxX - 100, enemy.targetX));
+                        enemy.targetY = Math.max(bounds.minY + 100, Math.min(bounds.maxY - 100, enemy.targetY));
+                        
+                        enemy.behavior = 'fleeing';
+                        targetSelected = true;
+                    }
+                    
+                    // Priority 2: Hunt viable prey
+                    if (!targetSelected) {
+                        const viablePrey = nearbyEntities.filter(e => e.prey && e.distance < enemy.radius * 12);
+                        if (viablePrey.length > 0) {
+                            // Target the closest prey
+                            const closestPrey = viablePrey.reduce((closest, current) => 
+                                current.distance < closest.distance ? current : closest
+                            );
+                            
+                            enemy.targetX = closestPrey.x;
+                            enemy.targetY = closestPrey.y;
+                            enemy.behavior = 'hunting';
+                            targetSelected = true;
+                        }
+                    }
+                    
+                    // Priority 3: Seek food efficiently
+                    if (!targetSelected && nearbyFood.length > 0) {
+                        // Find closest food that's not too risky
+                        const safeFood = nearbyFood.filter(f => {
+                            // Check if any threats are closer to this food
+                            const threatsNearFood = nearbyEntities.filter(e => e.threat).some(threat => {
+                                const threatToFood = Math.sqrt(Math.pow(threat.x - f.x, 2) + Math.pow(threat.y - f.y, 2));
+                                return threatToFood < f.distance;
+                            });
+                            return !threatsNearFood;
+                        });
+                        
+                        if (safeFood.length > 0) {
+                            const closestFood = safeFood.reduce((closest, current) => 
+                                current.distance < closest.distance ? current : closest
+                            );
+                            
+                            enemy.targetX = closestFood.x;
+                            enemy.targetY = closestFood.y;
+                            enemy.behavior = 'foraging';
+                            targetSelected = true;
+                        }
+                    }
+                    
+                    // Priority 4: Patrol territory intelligently
+                    if (!targetSelected) {
+                        // Move to areas with fewer large threats
+                        const safeZones = [];
+                        for (let i = 0; i < 8; i++) {
+                            const angle = (Math.PI * 2 * i) / 8;
+                            const testX = enemy.x + Math.cos(angle) * enemy.radius * 10;
+                            const testY = enemy.y + Math.sin(angle) * enemy.radius * 10;
+                            
+                            if (testX > bounds.minX + 100 && testX < bounds.maxX - 100 &&
+                                testY > bounds.minY + 100 && testY < bounds.maxY - 100) {
+                                
+                                const dangerLevel = nearbyEntities.filter(e => e.threat).reduce((danger, threat) => {
+                                    const distToTest = Math.sqrt(Math.pow(threat.x - testX, 2) + Math.pow(threat.y - testY, 2));
+                                    return danger + (1000 / Math.max(distToTest, 50));
+                                }, 0);
+                                
+                                safeZones.push({ x: testX, y: testY, danger: dangerLevel });
+                            }
+                        }
+                        
+                        if (safeZones.length > 0) {
+                            const safestZone = safeZones.reduce((safest, current) => 
+                                current.danger < safest.danger ? current : safest
+                            );
+                            
+                            enemy.targetX = safestZone.x;
+                            enemy.targetY = safestZone.y;
+                            enemy.behavior = 'patrolling';
+                        } else {
+                            // Fallback to random movement
+                            enemy.targetX = bounds.minX + Math.random() * (bounds.maxX - bounds.minX);
+                            enemy.targetY = bounds.minY + Math.random() * (bounds.maxY - bounds.minY);
+                            enemy.behavior = 'wandering';
+                        }
                     }
                 }
 
+                // Movement with behavior-based speed modification
                 const dx = enemy.targetX - enemy.x;
                 const dy = enemy.targetY - enemy.y;
                 const distanceToTarget = Math.sqrt(dx * dx + dy * dy);
+                
                 if (distanceToTarget > 1) {
-                    enemy.x += (dx / distanceToTarget) * enemy.speed;
-                    enemy.y += (dy / distanceToTarget) * enemy.speed;
+                    let speedMultiplier = 1;
+                    
+                    // Adjust speed based on behavior
+                    switch (enemy.behavior) {
+                        case 'fleeing':
+                            speedMultiplier = 1.5; // Faster when fleeing
+                            break;
+                        case 'hunting':
+                            speedMultiplier = 1.3; // Faster when hunting
+                            break;
+                        case 'foraging':
+                            speedMultiplier = 1.1; // Slightly faster when seeking food
+                            break;
+                        case 'patrolling':
+                            speedMultiplier = 0.8; // Slower when patrolling
+                            break;
+                        default:
+                            speedMultiplier = 0.7; // Slowest when wandering
+                    }
+                    
+                    const moveSpeed = enemy.speed * speedMultiplier;
+                    enemy.x += (dx / distanceToTarget) * moveSpeed;
+                    enemy.y += (dy / distanceToTarget) * moveSpeed;
                 }
 
+                // Smart food consumption
                 if (food.has(chunkKey)) {
                     const chunkFood = food.get(chunkKey);
                     for (let i = chunkFood.length - 1; i >= 0; i--) {
@@ -494,6 +709,7 @@ function updateEntities() {
                             enemy.radius = Math.sqrt((enemyArea + foodArea) / Math.PI);
                             chunkFood.splice(i, 1);
                             
+                            // Spawn replacement food in a random visible chunk
                             const randomChunk = Array.from(visibleChunks)[Math.floor(Math.random() * visibleChunks.size)];
                             const bounds = getChunkBounds(randomChunk);
                             if (food.has(randomChunk)) {
@@ -618,7 +834,8 @@ function checkCollisions() {
                                 targetX: bounds.minX + Math.random() * (bounds.maxX - bounds.minX),
                                 targetY: bounds.minY + Math.random() * (bounds.maxY - bounds.minY),
                                 name: "Bot",
-                                id: Math.random().toString(36).substr(2, 9)
+                                id: Math.random().toString(36).substr(2, 9),
+                                behavior: 'wandering'
                             });
                         }
                     } else if (enemy.radius > player.radius * 1.1) {
