@@ -33,30 +33,40 @@ const entityLimit = {
 };
 
 // Game configuration
+let baseMaxLevel = 10;
+
+function updateMaxLevels(score) {
+    const newMaxLevel = baseMaxLevel + (Math.floor(score / 500) * 5);
+    upgradeConfigs.speed.maxLevel = newMaxLevel;
+    upgradeConfigs.moneyBonus.maxLevel = newMaxLevel;
+    upgradeConfigs.absorption.maxLevel = newMaxLevel;
+    upgradeConfigs.stamina.maxLevel = newMaxLevel;
+}
+
 const upgradeConfigs = {
     speed: {
         basePrice: 100,
         priceMultiplier: 1.5,
         effect: 0.2,
-        maxLevel: 10
+        maxLevel: baseMaxLevel
     },
     moneyBonus: {
         basePrice: 150,
         priceMultiplier: 1.8,
         effect: 0.25,
-        maxLevel: 10
+        maxLevel: baseMaxLevel
     },
     absorption: {
         basePrice: 200,
         priceMultiplier: 2,
         effect: 0.15,
-        maxLevel: 10
+        maxLevel: baseMaxLevel
     },
     stamina: {
         basePrice: 175,
         priceMultiplier: 1.7,
         effect: 0.2,
-        maxLevel: 10
+        maxLevel: baseMaxLevel
     }
 };
 
@@ -521,7 +531,9 @@ function checkCollisions() {
                     const foodArea = Math.PI * f.radius * f.radius * absorptionBonus;
                     const playerArea = Math.PI * player.radius * player.radius;
                     player.radius = Math.sqrt((playerArea + foodArea) / Math.PI);
-                    player.score += Math.round(f.radius * 2);
+                    const scoreGain = Math.round(f.radius * 2);
+                    player.score += scoreGain;
+                    updateMaxLevels(player.score);
                     chunkFood.splice(i, 1);
                     
                     const randomChunk = Array.from(visibleChunks)[Math.floor(Math.random() * visibleChunks.size)];
@@ -588,7 +600,9 @@ function checkCollisions() {
                         const moneyBonus = 1 + (player.upgrades.moneyBonus - 1) * upgradeConfigs.moneyBonus.effect;
                         player.money += baseMoneyReward * moneyBonus;
                         
-                        player.score += Math.round(enemy.radius * 10);
+                        const scoreGain = Math.round(enemy.radius * 10);
+                        player.score += scoreGain;
+                        updateMaxLevels(player.score);
                         chunkEnemies.splice(i, 1);
                         
                         const randomChunk = Array.from(visibleChunks)[Math.floor(Math.random() * visibleChunks.size)];
