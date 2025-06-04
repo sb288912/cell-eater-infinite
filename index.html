@@ -1,0 +1,149 @@
+<html lang="en" class="dark-mode">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AllGPT 4</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="https://claude.ai/favicon.ico" type="image/x-icon">
+  <script src="https://unpkg.com/feather-icons"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="console.log('KaTeX auto-render loaded')"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <div class="logo">
+        <img src="ai-logo.png" alt="AI Icon">
+        <h1>AllGPT 4</h1>
+      </div>
+      <button id="newChatButton" class="new-chat-button">+ New Chat</button>
+      <button id="gptStoreButton" class="sidebar-button">GPT Store</button>
+      <button id="newAccountButton" class="account-button">Create New Account</button>
+      <div class="sidebar-divider"></div>
+      <div class="chat-history-container">
+        <h3>Your Chats</h3>
+        <div id="chatHistoryList" class="chat-history-list"></div>
+      </div>
+      <div class="user-profile-sidebar">
+      </div>
+    </div>
+    <div class="main-content">
+      <div class="header">
+        <button id="sidebarToggleButton" class="sidebar-toggle-button">
+          <i data-feather="menu"></i>
+        </button>
+        <div class="model-info">
+          <img src="ai-logo.png" alt="AI" class="ai-avatar" id="headerAiAvatar">
+          <div>
+            <h2 id="chatTitle">AllGPT 4</h2>
+            <p id="customGptIndicator" class="custom-gpt-indicator"></p>
+          </div>
+        </div>
+        <div class="model-selector-container">
+          <select id="modelSelector" class="model-selector">
+            <option value="claude-3-5-sonnet-latest">Loading models...</option>
+          </select>
+        </div>
+        <div class="reasoning-mode-container">
+          <label for="reasoningModeToggle" class="reasoning-mode-label">Reasoning Mode:</label>
+          <button id="reasoningModeToggle" class="toggle-button" aria-pressed="false">OFF</button>
+        </div>
+      </div>
+      <div class="chat-container" id="chatContainer">
+        <div class="chat-message assistant">
+          <div class="message-content">Hello! I'm AllGPT 4. How can I help you today?</div>
+        </div>
+      </div>
+      <div class="chat-input-container">
+        <div id="imagePreviewContainer"></div>
+        <div class="chat-input">
+          <div class="chat-input-wrapper">
+            <textarea id="userInput" placeholder="Message AllGPT 4..." rows="1"></textarea>
+          </div>
+          <div class="chat-controls">
+            <label class="file-upload">
+              <input type="file" id="imageUpload" accept="image/*">
+              <i data-feather="image"></i>
+            </label>
+            <button id="sendButton" class="send-button">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="status-info" id="statusInfo">
+        <p>Chat is ready. Using temporary Puter account.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="gptStoreModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>GPT Store</h2>
+        <button id="closeGptStoreModalButton" class="close-modal-button">&times;</button>
+      </div>
+      <div class="modal-body">
+        <button id="openCreateGptFormButton" class="button-primary">+ Create New GPT</button>
+        <div class="sidebar-divider"></div>
+        <h3>Community GPTs</h3>
+        <div id="communityGptList" class="gpt-list">
+          <p>Loading community GPTs...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="createGptModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="createGptModalTitle">Create New GPT</h2>
+        <button id="closeCreateGptModalButton" class="close-modal-button">&times;</button>
+      </div>
+      <div class="modal-body gpt-form">
+        <label for="gptNameInput">Name:</label>
+        <div class="input-with-button">
+          <input type="text" id="gptNameInput" placeholder="E.g., Story Weaver">
+          <button id="improveGptNameButton" class="button-secondary improve-button">Improve</button>
+        </div>
+
+        <label for="gptDescriptionInput">Description:</label>
+        <div class="input-with-button">
+          <textarea id="gptDescriptionInput" placeholder="E.g., Helps craft compelling narratives." rows="3"></textarea>
+          <button id="improveGptDescriptionButton" class="button-secondary improve-button">Improve</button>
+        </div>
+        
+        <label for="gptSystemPromptInput">System Prompt:</label>
+        <div class="input-with-button">
+          <textarea id="gptSystemPromptInput" placeholder="E.g., You are a helpful assistant that specializes in storytelling..." rows="5"></textarea>
+          <button id="improveGptSystemPromptButton" class="button-secondary improve-button">Improve</button>
+        </div>
+
+        <label for="gptModelSelector">Model:</label>
+        <select id="gptModelSelector" class="model-selector">
+        </select>
+
+        <label>Logo:</label>
+        <div class="logo-generation">
+          <img id="gptLogoPreview" src="ai-logo.png" alt="GPT Logo Preview" class="gpt-logo-preview">
+          <button id="generateGptLogoButton" class="button-secondary">Generate Logo</button>
+        </div>
+        <input type="hidden" id="gptLogoUrlInput">
+
+        <button id="saveGptButton" class="button-primary">Save GPT</button>
+        <p id="gptFormStatus" class="form-status"></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
